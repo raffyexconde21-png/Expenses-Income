@@ -6,28 +6,28 @@
 <title>Expenses & Income Tracker</title>
 <style>
 :root {
-  --primary:#3b82f6;
-  --primary-dark:#2563eb;
-  --primary-light:#dbeafe;
-  --secondary:#10b981;
-  --secondary-dark:#059669;
-  --danger:#ef4444;
-  --danger-dark:#dc2626;
-  --success:#10b981;
-  --gray-50:#f9fafb;
-  --gray-100:#f3f4f6;
-  --gray-200:#e5e7eb;
-  --gray-300:#d1d5db;
-  --gray-400:#9ca3af;
-  --gray-500:#6b7280;
-  --gray-600:#4b5563;
-  --gray-700:#374151;
-  --gray-800:#1f2937;
-  --gray-900:#111827;
-  --white:#ffffff;
+  --primary: #3b82f6;
+  --primary-dark: #2563eb;
+  --primary-light: #dbeafe;
+  --secondary: #10b981;
+  --secondary-dark: #059669;
+  --danger: #ef4444;
+  --danger-dark: #dc2626;
+  --success: #10b981;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --white: #ffffff;
 }
 body{font-family:Arial;background:linear-gradient(135deg,var(--gray-50),var(--primary-light));margin:0;padding:20px}
-.container{max-width:600px;margin:auto}
+.container{max-width:800px;margin:auto}
 .card{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 5px 15px rgba(0,0,0,.1)}
 h1{text-align:center;margin-bottom:20px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -44,10 +44,10 @@ table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border:1px solid #ddd;padding:8px;text-align:center}
 th{background:var(--primary);color:white}
 .total-amount{margin-top:10px;font-weight:bold}
+.show-pass-label{font-size:12px;color:#374151;display:flex;align-items:center;gap:4px;margin-top:-8px;margin-bottom:8px}
 .instructions{font-size:12px;color:#374151;margin-top:5px;display:none}
 .instructions-btn{background:var(--secondary);color:#fff;font-size:12px;padding:4px 8px;border-radius:5px;border:none;cursor:pointer}
 .instructions-btn:hover{opacity:.9}
-.show-pass-label{font-size:12px;color:#374151;display:flex;align-items:center;gap:4px;margin-top:-8px;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -56,14 +56,35 @@ th{background:var(--primary);color:white}
   <button class="instructions-btn" onclick="toggleInstructions()">Instructions</button>
 </h1>
 <div class="instructions" id="instructions">
-- First, create your account if you haven't yet.<br>
-- Use the same credentials to login to Expenses and Income.<br>
-- After creating account, the section will be automatically locked; only admin can reset.<br>
-- Login to Expenses or Income and optionally change password separately.<br>
-- <b>Show Password</b> checkbox can be used to verify typed password.<br>
-- <b>Copy Table</b> copies all displayed data to clipboard for backup in Excel/Google Sheets before clearing browser data.<br>
-- <b>Filter</b> selects data between two dates or clear to see overall summary.<br>
-- <b>⚠️ Important:</b> All data is stored in localStorage. Clearing browser data will erase all entries. Use Copy Table to backup before clearing.
+- Create account first if none exists.<br>
+- Same credentials used for Expenses & Income login.<br>
+- After creation, section is locked; only admin can reset.<br>
+- Show Password checkbox verifies typed password.<br>
+- Copy Table copies data for backup in Excel/Sheets before clearing browser data.<br>
+- Filter selects data between two dates.<br>
+- ⚠️ Important: All data stored in localStorage. Clearing browser data erases entries. Backup before clearing.
+</div>
+
+<!-- CREATE ACCOUNT -->
+<div class="card">
+<h2>Create / Reset Account</h2>
+<div class="login-section" id="createAccountSection">
+<div class="row">
+<div class="col">
+<input id="newUser" placeholder="New Username">
+</div>
+<div class="col">
+<input id="newPass" type="password" placeholder="New Password">
+<label class="show-pass-label"><input type="checkbox" onclick="toggleShowPassword('create')"> Show Password</label>
+</div>
+<div class="col">
+<button type="button" onclick="createAccount()" id="createBtn">Create</button>
+<button type="button" onclick="resetAccount()" id="resetBtn" style="display:none">Reset</button>
+</div>
+</div>
+<div id="resetNote" class="instructions" style="display:none">
+Forgot your account? Email raffyexconde21@gmail.com to reset access.
+</div>
 </div>
 
 <!-- ADD ENTRY -->
@@ -123,6 +144,16 @@ th{background:var(--primary);color:white}
 <tbody></tbody>
 </table>
 <div class="total-amount">Total: ₱<span id="expensesTotal">0.00</span></div>
+
+<h3>Yearly Expenses</h3>
+<div class="row">
+<div class="col"><input id="expYear" type="number" placeholder="Year"></div>
+<div class="col"><button onclick="applyYear('expenses')">Filter</button><button onclick="clearYear('expenses')">Clear</button></div>
+</div>
+<table id="expensesYearly">
+<thead><tr><th>Month</th><th>Total</th><th>Count</th><th>Average</th></tr></thead>
+<tbody></tbody>
+</table>
 </div>
 
 <!-- INCOME SUMMARY -->
@@ -158,193 +189,210 @@ th{background:var(--primary);color:white}
 <tbody></tbody>
 </table>
 <div class="total-amount">Total: ₱<span id="incomeTotal">0.00</span></div>
-</div>
 
-<!-- CREATE ACCOUNT -->
-<div class="card">
-<h2>Create Account</h2>
-<div class="login-section" id="createAccountSection">
+<h3>Yearly Income</h3>
 <div class="row">
-<div class="col">
-<input id="newUser" placeholder="New Username">
+<div class="col"><input id="incYear" type="number" placeholder="Year"></div>
+<div class="col"><button onclick="applyYear('income')">Filter</button><button onclick="clearYear('income')">Clear</button></div>
 </div>
-<div class="col">
-<input id="newPass" type="password" placeholder="New Password">
-<label class="show-pass-label"><input type="checkbox" onclick="toggleShowPassword('create')"> Show Password</label>
-</div>
-<div class="col">
-<button type="button" onclick="createAccount()" id="createBtn">Create</button>
-<button type="button" onclick="resetAccount()" id="resetBtn" style="display:none">Reset</button>
-</div>
-</div>
-<div id="resetNote" class="instructions" style="display:none">
-Forgot your account? Email raffyexconde21@gmail.com to reset access.
-</div>
+<table id="incomeYearly">
+<thead><tr><th>Month</th><th>Total</th><th>Count</th><th>Average</th></tr></thead>
+<tbody></tbody>
+</table>
 </div>
 
 <script>
-const EXP_KEY="tracker_expenses_v2";
-const INC_KEY="tracker_incomes_v2";
-const PASS_KEY_EXP="tracker_exp_pass_v2";
-const PASS_KEY_INC="tracker_inc_pass_v2";
-const LOCK_KEY="tracker_create_lock_v5";
-
+const EXP_KEY="tracker_expenses_v2",INC_KEY="tracker_incomes_v2",PASS_KEY_EXP="tracker_exp_pass_v2",PASS_KEY_INC="tracker_inc_pass_v2",LOCK_KEY="tracker_create_lock_v5";
 let expenses=JSON.parse(localStorage.getItem(EXP_KEY)||"[]");
 let incomes=JSON.parse(localStorage.getItem(INC_KEY)||"[]");
 let credExp=JSON.parse(localStorage.getItem(PASS_KEY_EXP)||'{"user":"admin","pass":"2121"}');
 let credInc=JSON.parse(localStorage.getItem(PASS_KEY_INC)||'{"user":"admin","pass":"2121"}');
 let isLocked=JSON.parse(localStorage.getItem(LOCK_KEY)||"false");
-
-entryDate.value=new Date().toISOString().split('T')[0];
+document.getElementById("entryDate").value=new Date().toISOString().split('T')[0];
 
 function saveAll(){
-  localStorage.setItem(EXP_KEY,JSON.stringify(expenses));
-  localStorage.setItem(INC_KEY,JSON.stringify(incomes));
-  localStorage.setItem(PASS_KEY_EXP,JSON.stringify(credExp));
-  localStorage.setItem(PASS_KEY_INC,JSON.stringify(credInc));
-  localStorage.setItem(LOCK_KEY,JSON.stringify(isLocked));
+localStorage.setItem(EXP_KEY,JSON.stringify(expenses));
+localStorage.setItem(INC_KEY,JSON.stringify(incomes));
+localStorage.setItem(PASS_KEY_EXP,JSON.stringify(credExp));
+localStorage.setItem(PASS_KEY_INC,JSON.stringify(credInc));
+localStorage.setItem(LOCK_KEY,JSON.stringify(isLocked));
 }
 
 function updateLockUI(){
-  const createBtn=document.getElementById('createBtn');
-  const resetBtn=document.getElementById('resetBtn');
-  const resetNote=document.getElementById('resetNote');
-
-  if(isLocked){
-    createBtn.style.display='none';
-    resetBtn.style.display='inline-block';
-    resetNote.style.display='block';
-  }else{
-    createBtn.style.display='inline-block';
-    resetBtn.style.display='none';
-    resetNote.style.display='none';
-  }
+const createBtn=document.getElementById('createBtn');
+const resetBtn=document.getElementById('resetBtn');
+const resetNote=document.getElementById('resetNote');
+if(isLocked){
+createBtn.style.display='none';
+resetBtn.style.display='inline-block';
+resetNote.style.display='block';
+}else{
+createBtn.style.display='inline-block';
+resetBtn.style.display='none';
+resetNote.style.display='none';
+}
 }
 
 function createAccount(){
-  if(isLocked) return alert("Create Account is locked!");
-  if(newUser.value.length<3||newPass.value.length<3) return alert("Minimum 3 characters");
-  credExp={user:newUser.value.trim(),pass:newPass.value};
-  credInc={user:newUser.value.trim(),pass:newPass.value};
-  newUser.value="";
-  newPass.value="";
-  isLocked=true; // automatic lock after create
-  saveAll();
-  updateLockUI();
-  alert("Account Created! Section locked. You can now login to Expenses and Income.");
+if(isLocked) return alert("Create Account is locked!");
+if(newUser.value.length<3||newPass.value.length<3) return alert("Minimum 3 characters");
+credExp={user:newUser.value.trim(),pass:newPass.value};
+credInc={user:newUser.value.trim(),pass:newPass.value};
+newUser.value="";
+newPass.value="";
+isLocked=true;
+saveAll();
+updateLockUI();
+alert("Account Created! Section locked. You can now login.");
 }
 
 function resetAccount(){
-  const u=prompt("Enter admin username:");
-  const p=prompt("Enter admin password:");
-  if(u==='admin' && p==='2121'){
-    isLocked=false;
-    credExp={user:"",pass:""};
-    credInc={user:"",pass:""};
-    saveAll();
-    updateLockUI();
-    alert("Create Account unlocked! You can now create a new account.");
-  }else{
-    alert("Wrong admin credentials!");
-  }
+const u=prompt("Enter admin username:");
+const p=prompt("Enter admin password:");
+if(u==='admin' && p==='2121'){
+isLocked=false;
+credExp={user:"",pass:""};
+credInc={user:"",pass:""};
+saveAll();
+updateLockUI();
+alert("Create Account unlocked! You can now create a new account.");
+}else{
+alert("Wrong admin credentials!");
+}
 }
 
 function toggleInstructions(){
-  const inst=document.getElementById('instructions');
-  inst.style.display=inst.style.display==='none'?'block':'none';
+const inst=document.getElementById('instructions');
+inst.style.display=inst.style.display==='none'?'block':'none';
 }
 
 function toggleShowPassword(section){
-  let inputId;
-  if(section==='exp') inputId='expPassword';
-  else if(section==='inc') inputId='incPassword';
-  else inputId='newPass';
-  const passField=document.getElementById(inputId);
-  passField.type = passField.type==='password'?'text':'password';
+let inputId;
+if(section==='exp') inputId='expPassword';
+else if(section==='inc') inputId='incPassword';
+else inputId='newPass';
+const passField=document.getElementById(inputId);
+passField.type = passField.type==='password'?'text':'password';
 }
 
 addForm.addEventListener("submit",e=>{
-  e.preventDefault();
-  const data={date:entryDate.value,desc:entryDesc.value,amount:parseFloat(entryAmount.value)};
-  if(entryType.value==="expense") expenses.push(data);
-  else incomes.push(data);
-  saveAll();
-  renderTables();
-  e.target.reset();
-  entryDate.value=new Date().toISOString().split('T')[0];
+e.preventDefault();
+const data={date:entryDate.value,desc:entryDesc.value,amount:parseFloat(entryAmount.value)};
+if(entryType.value==="expense") expenses.push(data);
+else incomes.push(data);
+saveAll();
+renderTables();
+e.target.reset();
+entryDate.value=new Date().toISOString().split('T')[0];
 });
 
 function loginSection(section){
-  if(section==="expenses"){
-    if(expUsername.value===credExp.user&&expPassword.value===credExp.pass){
-      expensesLogin.style.display="none";
-      expensesContent.style.display="block";
-      renderTables();
-    }else expLoginMsg.textContent="Wrong credentials";
-  }else{
-    if(incUsername.value===credInc.user&&incPassword.value===credInc.pass){
-      incomeLogin.style.display="none";
-      incomeContent.style.display="block";
-      renderTables();
-    }else incLoginMsg.textContent="Wrong credentials";
-  }
+if(section==="expenses"){
+if(expUsername.value===credExp.user&&expPassword.value===credExp.pass){
+expensesLogin.style.display="none";
+expensesContent.style.display="block";
+renderTables();
+}else expLoginMsg.textContent="Wrong credentials";
+}else{
+if(incUsername.value===credInc.user&&incPassword.value===credInc.pass){
+incomeLogin.style.display="none";
+incomeContent.style.display="block";
+renderTables();
+}else incLoginMsg.textContent="Wrong credentials";
+}
 }
 
 function logoutSection(section){
-  if(section==="expenses"){
-    expensesContent.style.display="none";
-    expensesLogin.style.display="block";
-    expPassword.value="";
-  }else{
-    incomeContent.style.display="none";
-    incomeLogin.style.display="block";
-    incPassword.value="";
-  }
+if(section==="expenses"){
+expensesContent.style.display="none";
+expensesLogin.style.display="block";
+expPassword.value="";
+}else{
+incomeContent.style.display="none";
+incomeLogin.style.display="block";
+incPassword.value="";
+}
 }
 
 function changePassword(section){
-  const newPass=prompt("Enter new password:");
-  if(!newPass||newPass.length<3) return alert("Not changed");
-  if(section==="expenses") credExp.pass=newPass;
-  else credInc.pass=newPass;
-  saveAll();
-  alert("Password updated for " + section);
+const newPass=prompt("Enter new password:");
+if(!newPass||newPass.length<3) return alert("Not changed");
+if(section==="expenses") credExp.pass=newPass;
+else credInc.pass=newPass;
+saveAll();
+alert("Password updated for " + section);
 }
 
 function applyFilter(section){
-  const start=document.getElementById(section==="expenses"?"expStart":"incStart").value;
-  const end=document.getElementById(section==="expenses"?"expEnd":"incEnd").value;
-  renderTables(start,end);
+const start=document.getElementById(section==="expenses"?"expStart":"incStart").value;
+const end=document.getElementById(section==="expenses"?"expEnd":"incEnd").value;
+renderTables(start,end);
 }
 
 function renderTables(start=null,end=null){
-  let totalExp=0;
-  expensesTable.querySelector("tbody").innerHTML="";
-  expenses.filter(e=>{if(start&&e.date<start)return false;if(end&&e.date>end)return false;return true;}).forEach(e=>{
-    totalExp+=e.amount;
-    expensesTable.querySelector("tbody").innerHTML+=`<tr><td>${e.date}</td><td>${e.desc}</td><td>₱${e.amount.toFixed(2)}</td></tr>`;
-  });
-  expensesTotal.textContent=totalExp.toFixed(2);
+let totalExp=0;
+expensesTable.querySelector("tbody").innerHTML="";
+expenses.filter(e=>{if(start&&e.date<start)return false;if(end&&e.date>end)return false;return true;}).forEach(e=>{
+totalExp+=e.amount;
+expensesTable.querySelector("tbody").innerHTML+=`<tr><td>${e.date}</td><td>${e.desc}</td><td>₱${e.amount.toFixed(2)}</td></tr>`;
+});
+expensesTotal.textContent=totalExp.toFixed(2);
 
-  let totalInc=0;
-  incomeTable.querySelector("tbody").innerHTML="";
-  incomes.filter(i=>{if(start&&i.date<start)return false;if(end&&i.date>end)return false;return true;}).forEach(i=>{
-    totalInc+=i.amount;
-    incomeTable.querySelector("tbody").innerHTML+=`<tr><td>${i.date}</td><td>${i.desc}</td><td>₱${i.amount.toFixed(2)}</td></tr>`;
-  });
-  incomeTotal.textContent=totalInc.toFixed(2);
+let totalInc=0;
+incomeTable.querySelector("tbody").innerHTML="";
+incomes.filter(i=>{if(start&&i.date<start)return false;if(end&&i.date>end)return false;return true;}).forEach(i=>{
+totalInc+=i.amount;
+incomeTable.querySelector("tbody").innerHTML+=`<tr><td>${i.date}</td><td>${i.desc}</td><td>₱${i.amount.toFixed(2)}</td></tr>`;
+});
+incomeTotal.textContent=totalInc.toFixed(2);
+}
+
+function applyYear(section){
+const yearInput=section==='expenses'?document.getElementById("expYear").value:document.getElementById("incYear").value;
+const yearFilter=yearInput?String(yearInput):null;
+renderYearly(section,yearFilter);
+}
+
+function clearYear(section){
+if(section==='expenses'){document.getElementById("expYear").value=""; renderYearly('expenses', null);}
+else{document.getElementById("incYear").value=""; renderYearly('income', null);}
+}
+
+function renderYearly(section,yearFilter=null){
+const tbody=document.querySelector(`#${section}Yearly tbody`);
+tbody.innerHTML="";
+const list=section==='expenses'?expenses:incomes;
+const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
+let grandTotal=0, grandCount=0;
+months.forEach((m,idx)=>{
+const mm=String(idx+1).padStart(2,'0');
+const filtered=list.filter(it=>{const [y,mo]=it.date.split("-"); if(yearFilter && y!==String(yearFilter)) return false; return mo===mm;});
+const total=filtered.reduce((s,it)=>s+Number(it.amount),0);
+const count=filtered.length;
+grandTotal+=total;
+grandCount+=count;
+const tr=document.createElement('tr');
+tr.innerHTML=`<td>${m}</td><td>₱${total.toFixed(2)}</td><td>${count}</td><td>₱${(count?total/count:0).toFixed(2)}</td>`;
+tbody.appendChild(tr);
+});
+const trTotal=document.createElement('tr');
+trTotal.style.fontWeight='700';
+trTotal.innerHTML=`<td>TOTAL</td><td>₱${grandTotal.toFixed(2)}</td><td>${grandCount}</td><td>₱${(grandCount?grandTotal/grandCount:0).toFixed(2)}</td>`;
+tbody.appendChild(trTotal);
 }
 
 function copyTable(section){
-  const table=document.getElementById(section==="expenses"?"expensesTable":"incomeTable");
-  let text="";
-  table.querySelectorAll("tr").forEach(r=>{r.querySelectorAll("th,td").forEach(c=>text+=c.innerText+"\t");text+="\n";});
-  navigator.clipboard.writeText(text);
-  alert("Table copied!");
+const table=document.getElementById(section==="expenses"?"expensesTable":"incomeTable");
+let text="";
+table.querySelectorAll("tr").forEach(r=>{r.querySelectorAll("th,td").forEach(c=>text+=c.innerText+"\t"); text+="\n";});
+navigator.clipboard.writeText(text);
+alert("Table copied!");
 }
 
 updateLockUI();
 renderTables();
+renderYearly('expenses');
+renderYearly('income');
 </script>
 </body>
 </html>
